@@ -26,15 +26,19 @@
   const inSub = /\/subjects\//.test(location.pathname) || /subjects/.test(location.pathname);
   const HOME = inSub ? '../index.html' : 'index.html';
   const subHref = (id) => (inSub ? id + '.html' : 'subjects/' + id + '.html');
+  const toolHref = (n) => (inSub ? '../' + n + '.html' : n + '.html');
 
   /* ---------------- 通用片段 ---------------- */
-  function topbar(activeId) {
+  function topbar(activeId, activeTool) {
     const list = (window.SUBJECT_INDEX || []).map(
       (s) => '<a href="' + subHref(s.id) + '" class="' + (s.id === activeId ? 'active' : '') + '">' + s.emoji + ' ' + esc(s.name) + '</a>'
     ).join('');
     return '<header class="topbar"><div class="wrap">' +
       '<a class="brand" href="' + HOME + '"><span class="dot"></span>高二上·第一次月考复习站</a>' +
-      '<nav class="navtabs">' + list + '</nav>' +
+      '<nav class="navtabs">' + list +
+        '<a href="' + toolHref('hub') + '" class="' + (activeTool === 'hub' ? 'active' : '') + '">📚 知识库</a>' +
+        '<a href="' + toolHref('sprint') + '" class="' + (activeTool === 'sprint' ? 'active' : '') + '">🚀 冲刺台</a>' +
+      '</nav>' +
       '<button class="iconbtn" id="themeBtn" title="切换明暗主题">🌙</button>' +
       '</div></header>';
   }
@@ -405,6 +409,18 @@
             '<span class="go">进入复习 <i>→</i></span>' +
           '</a>').join('') +
         '</div>' +
+        '<section class="block reveal" id="tools">' +
+          '<div class="sec-head"><span class="ic">🧰</span><h2>合并进来的两大工具</h2></div>' +
+          '<p class="sec-sub">已把 GitHub 上另外两个项目的内容并入本站：知识点库与冲刺工具台，源仓库保持原样、未做任何改动。</p>' +
+          '<div class="subgrid" style="padding:8px 0 10px">' +
+            '<a class="subcard reveal" style="--c:#22d3ee" href="' + toolHref('hub') + '"><span class="emoji">📚</span><h3>全科知识库</h3>' +
+              '<p class="rng">来自 high-school-knowledge-hub：六科 2408 个知识点，按学段 → 模块 → 重点/难点/考点组织，含详细讲解、例题解析与易错提醒，支持三级掌握度、检索与随机复习。</p>' +
+              '<span class="go">进入知识库 <i>→</i></span></a>' +
+            '<a class="subcard reveal" style="--c:#fbbf24" href="' + toolHref('sprint') + '"><span class="emoji">🚀</span><h3>月考冲刺台</h3>' +
+              '<p class="rng">来自 gao2-monthly-exam-review：月考倒计时、按剩余天数自动排布的复习计划、各科时间占比、打卡清单、考场策略、108 道训练题与六科知识导图。</p>' +
+              '<span class="go">进入冲刺台 <i>→</i></span></a>' +
+          '</div>' +
+        '</section>' +
         '<section class="block reveal">' +
           '<div class="sec-head"><span class="ic">🧭</span><h2>怎么用这个站</h2></div>' +
           '<div class="list">' +
@@ -424,6 +440,15 @@
     const d = window.SUBJECT_DATA;
     const app = $('#app');
     d.accent = d.accent || '#5b8cff';
+    // 并入「冲刺站」迁移板块与闪卡
+    const extra = window.SUBJECT_EXTRA;
+    if (extra) {
+      const baseBlocks = d.blocks || [];
+      (extra.blocks || []).forEach((b) => baseBlocks.push(b));
+      d.blocks = baseBlocks;
+      d.flashcards = (d.flashcards || []).concat(extra.flashcards || []);
+      d.mergedFromSprint = true;
+    }
     document.documentElement.style.setProperty('--accent', d.accent);
     const blocks = d.blocks || [];
     const chips = blocks.map((b) => '<a href="#' + b.id + '">' + esc(b.icon || '') + ' ' + esc(b.title) + '</a>').join('') +
@@ -447,6 +472,7 @@
           '<h1><span style="font-size:.9em">' + (d.emoji || '') + '</span> ' + esc(d.name) + ' · <span class="grad">第一次月考</span></h1>' +
           '<p class="lead">' + esc(d.range || '') + '</p>' +
           (d.slogan ? '<p class="lead" style="color:var(--txt)">' + esc(d.slogan) + '</p>' : '') +
+          (d.mergedFromSprint ? '<div class="pills"><span class="pill" style="border-color:var(--ok)">🔗 已并入「月考冲刺站」的速查表与闪卡</span></div>' : '') +
           '<div class="pills"><span class="pill">📚 <b>' + blocks.length + '</b> 个考点板块</span>' +
           '<span class="pill">🎴 <b>' + ((d.flashcards || []).length) + '</b> 张闪卡</span>' +
           '<span class="pill">✍️ <b>' + ((d.quiz || []).length) + '</b> 道自测</span>' +
@@ -508,8 +534,9 @@
   initThemeAndRender();
   function initThemeAndRender() {
     paintTheme();
+    if (window.STUDY_NO_AUTO) return;
     if (window.SUBJECT_DATA) renderSubject();
     else if (window.SUBJECT_INDEX) renderHome();
   }
-  window.STUDY = { confetti, flash, renderSubject, renderHome };
+  window.STUDY = { confetti, flash, renderSubject, renderHome, topbar, afterRender, esc, LS, stars, toolHref, subHref };
 })();
