@@ -37,11 +37,20 @@
       '<a class="brand" href="' + HOME + '"><span class="dot"></span>高二上·第一次月考复习站</a>' +
       '<nav class="navtabs">' + list +
         '<a href="' + toolHref('hub') + '" class="' + (activeTool === 'hub' ? 'active' : '') + '">📚 知识库</a>' +
-        '<a href="' + toolHref('sprint') + '" class="' + (activeTool === 'sprint' ? 'active' : '') + '">🚀 冲刺台</a>' +
+        '<a href="' + (inSub ? '../index.html#dash' : '#dash') + '" class="' + (activeTool === 'dash' ? 'active' : '') + '">🚀 驾驶舱</a>' +
       '</nav>' +
       '<button class="iconbtn" id="themeBtn" title="切换明暗主题">🌙</button>' +
       '</div></header>';
   }
+  function footerHTML() {
+    return '<footer><div class="wrap">' +
+      '高二上 · 第一次月考复习站　·　融合自 ' +
+      '<a href="https://github.com/Peter1384345/high-school-knowledge-hub" target="_blank" rel="noopener">high-school-knowledge-hub</a> 与 ' +
+      '<a href="https://github.com/Peter1384345/gao2-monthly-exam-review" target="_blank" rel="noopener">gao2-monthly-exam-review</a>' +
+      '<br>所有进度保存在本机浏览器，不联网、不上传。' +
+      '</div></footer>';
+  }
+
   function backTop() {
     return '<button class="totop" id="toTop" title="回到顶部">↑</button>';
   }
@@ -98,7 +107,7 @@
           '<button class="master" data-mkey="' + k + '" title="标记已掌握">✓</button></article>';
       }).join('') + '</div>';
     }
-    return '<section class="block reveal" id="' + b.id + '">' +
+    return '<section class="block reveal" data-anim="blur" id="' + b.id + '">' +
       '<div class="sec-head"><span class="ic">' + esc(b.icon || '📌') + '</span><h2>' + esc(b.title) + '</h2></div>' +
       intro + body + '</section>';
   }
@@ -401,24 +410,35 @@
             '<span class="pill">🌗 明暗主题</span>' +
           '</div>' +
         '</div>' +
+        (window.DASHBOARD ? DASHBOARD.html() : '') +
+        '<section class="block reveal" id="subjects">' +
+          '<div class="sec-head"><span class="ic">🎒</span><h2>六科分科复习</h2></div>' +
+          '<p class="sec-sub">每科一个独立页面，内容按「考点清单 → 速查 / 二级结论 → 本科知识库 → 3D 闪卡 → 即时自测 → 本科训练场」融合排布。</p>' +
         '<div class="subgrid">' + idx.map((s) =>
-          '<a class="subcard reveal" style="--c:' + s.accent + '" href="' + subHref(s.id) + '">' +
+          '<a class="subcard reveal" data-anim="scale" style="--c:' + s.accent + '" href="' + subHref(s.id) + '">' +
             '<span class="emoji">' + s.emoji + '</span>' +
             '<h3>' + esc(s.name) + '</h3>' +
             '<p class="rng">' + esc(s.range) + '</p>' +
             '<span class="go">进入复习 <i>→</i></span>' +
           '</a>').join('') +
         '</div>' +
-        '<section class="block reveal" id="tools">' +
-          '<div class="sec-head"><span class="ic">🧰</span><h2>合并进来的两大工具</h2></div>' +
-          '<p class="sec-sub">已把 GitHub 上另外两个项目的内容并入本站：知识点库与冲刺工具台，源仓库保持原样、未做任何改动。</p>' +
-          '<div class="subgrid" style="padding:8px 0 10px">' +
-            '<a class="subcard reveal" style="--c:#22d3ee" href="' + toolHref('hub') + '"><span class="emoji">📚</span><h3>全科知识库</h3>' +
-              '<p class="rng">来自 high-school-knowledge-hub：六科 2408 个知识点，按学段 → 模块 → 重点/难点/考点组织，含详细讲解、例题解析与易错提醒，支持三级掌握度、检索与随机复习。</p>' +
+        '<section class="block reveal" id="fusion">' +
+          '<div class="sec-head"><span class="ic">🧬</span><h2>两个项目是被融合，不是被并列</h2></div>' +
+          '<p class="sec-sub">知识库不再是一个独立站点，冲刺工具也不再是一张外挂页面——它们已经长进了这个站的信息结构里。</p>' +
+          '<div class="list">' +
+            ['📚 high-school-knowledge-hub 的 2408 个知识点按学科拆解，成为每科页面里的「本科知识库」区块，点开才加载，不拖慢首屏。',
+             '🧭 它的六科知识导图同步下沉到对应学科页，节点可展开、可看提示。',
+             '🚀 gao2-monthly-exam-review 的倒计时、复习计划、时间占比、打卡清单与考场策略，已经合并成上面的「备考驾驶舱」。',
+             '🏋️ 它的题库与本站 72 道自测合并成统一训练场：首页六科可切换，每科页面也有本科专属入口。'
+            ].map((t, i) => '<div class="li" data-anim="left"><div class="n">' + (i + 1) + '</div><div class="c"><b>' + esc(t) + '</b></div></div>').join('') +
+          '</div>' +
+          '<div class="subgrid" style="padding:16px 0 0">' +
+            '<a class="subcard reveal" data-anim="scale" style="--c:#22d3ee" href="' + toolHref('hub') + '"><span class="emoji">🔎</span><h3>跨科检索 · 电子课本</h3>' +
+              '<p class="rng">需要横向比较六科或按教材目录找章节时，进知识库总览：学科切换、全文检索、电子课本目录、随机复习。</p>' +
               '<span class="go">进入知识库 <i>→</i></span></a>' +
-            '<a class="subcard reveal" style="--c:#fbbf24" href="' + toolHref('sprint') + '"><span class="emoji">🚀</span><h3>月考冲刺台</h3>' +
-              '<p class="rng">来自 gao2-monthly-exam-review：月考倒计时、按剩余天数自动排布的复习计划、各科时间占比、打卡清单、考场策略、108 道训练题与六科知识导图。</p>' +
-              '<span class="go">进入冲刺台 <i>→</i></span></a>' +
+            '<a class="subcard reveal" data-anim="scale" style="--c:#5b8cff" href="' + subHref('math') + '"><span class="emoji">🎯</span><h3>从最重的一科开始</h3>' +
+              '<p class="rng">数学占每日复习时间 25%，是最该先动的一科。直接进数学页，从考点清单一路刷到本科训练场。</p>' +
+              '<span class="go">进入数学 <i>→</i></span></a>' +
           '</div>' +
         '</section>' +
         '<section class="block reveal">' +
@@ -431,8 +451,9 @@
             ].map((t, i) => '<div class="li"><div class="n">' + (i + 1) + '</div><div class="c"><b>' + esc(t) + '</b></div></div>').join('') +
           '</div>' +
         '</section>' +
-      '</main>' + backTop();
+      '</main>' + backTop() + footerHTML();
     afterRender();
+    if (window.DASHBOARD) DASHBOARD.mount();
   }
 
   /* ---------------- 学科页 ---------------- */
@@ -453,7 +474,9 @@
     const blocks = d.blocks || [];
     const chips = blocks.map((b) => '<a href="#' + b.id + '">' + esc(b.icon || '') + ' ' + esc(b.title) + '</a>').join('') +
       (d.flashcards && d.flashcards.length ? '<a href="#flash">🎴 记忆闪卡</a>' : '') +
-      (d.quiz && d.quiz.length ? '<a href="#quiz">✍️ 即时自测</a>' : '');
+      (d.quiz && d.quiz.length ? '<a href="#quiz">✍️ 即时自测</a>' : '') +
+      (window.KB ? '<a href="#kb">📚 本科知识库</a>' : '') +
+      (window.DASHBOARD ? '<a href="#train">🏋️ 本科训练场</a>' : '');
 
     const strat = d.strategy || {};
     const stratHTML = '<section class="block reveal" id="strategy">' +
@@ -485,14 +508,18 @@
         '<div class="progwrap"><div class="progbar"><i id="allProg"></i></div><span class="proglabel" id="allProgLabel">考点掌握 0 / 0</span></div>' +
         stratHTML +
         blocks.map((b) => renderBlock(b, d.id)).join('') +
+        (window.KB ? KB.html(d.id) : '') +
         flashSection(d) +
         quizSection(d) +
-      '</main>' + backTop();
+        (window.DASHBOARD ? DASHBOARD.trainerHTML(d.id) : '') +
+      '</main>' + backTop() + footerHTML();
     afterRender();
     initMaster(d);
     initFlash(d);
     initQuiz(d);
     initSearch(d);
+    if (window.KB) KB.mount(d.id);
+    if (window.DASHBOARD) DASHBOARD.mountTrainer(document.getElementById('train'), d.id);
   }
 
   /* ---------------- 渲染后通用 ---------------- */
@@ -529,14 +556,16 @@
     } else {
       $$('.reveal').forEach((n) => n.classList.add('in'));
     }
+    if (window.MOTION) window.MOTION.refresh();
   }
 
-  initThemeAndRender();
   function initThemeAndRender() {
     paintTheme();
     if (window.STUDY_NO_AUTO) return;
     if (window.SUBJECT_DATA) renderSubject();
     else if (window.SUBJECT_INDEX) renderHome();
   }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initThemeAndRender);
+  else initThemeAndRender();
   window.STUDY = { confetti, flash, renderSubject, renderHome, topbar, afterRender, esc, LS, stars, toolHref, subHref };
 })();

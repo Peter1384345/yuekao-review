@@ -9,7 +9,7 @@ http.createServer((req,res)=>{
   if(!fp.startsWith(root)){res.writeHead(403);return res.end('forbidden');}
   fs.readFile(fp,(e,buf)=>{
     if(e){res.writeHead(404,{'Content-Type':'text/plain; charset=utf-8'});return res.end('404 '+p);}
-    res.writeHead(200,{'Content-Type':types[path.extname(fp).toLowerCase()]||'application/octet-stream'});
+    res.writeHead(200,{'Content-Type':types[path.extname(fp).toLowerCase()]||'application/octet-stream','Cache-Control':'no-store, must-revalidate','Pragma':'no-cache'});
     res.end(buf);
   });
 }).listen(port,'127.0.0.1',()=>console.log('serving http://127.0.0.1:'+port));

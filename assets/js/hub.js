@@ -15,6 +15,7 @@
     { id: 'chemistry',name: '化学', emoji: '🧪', accent: '#fbbf24' },
     { id: 'biology',  name: '生物', emoji: '🧬', accent: '#22d3ee' }
   ];
+  var MAPKEY = { chinese: 'yuwen', math: 'shuxue', english: 'yingyu', physics: 'wuli', chemistry: 'huaxue', biology: 'shengwu' };
   var GROUPS = [
     { key: 'k', label: '重点', icon: '⭐', cls: 'g-key' },
     { key: 'd', label: '难点', icon: '🧩', cls: 'g-diff' },
@@ -93,6 +94,7 @@
           '<div class="modes">' +
             '<button class="btn' + (mode === 'points' ? ' primary' : '') + '" data-mode="points">🧠 知识点</button>' +
             '<button class="btn' + (mode === 'book' ? ' primary' : '') + '" data-mode="book">📖 电子课本</button>' +
+            '<button class="btn' + (mode === 'map' ? ' primary' : '') + '" data-mode="map">🧭 知识导图</button>' +
           '</div>' +
           '<input id="hubSearch" placeholder="🔍 检索本学科知识点、讲解、例题…" value="' + esc(query) + '">' +
           '<button class="btn" id="hubRandom">🎲 随机复习</button>' +
@@ -151,8 +153,9 @@
         '<div class="progwrap"><div class="progbar"><i style="width:' + pr.pct + '%"></i></div>' +
         '<span class="proglabel">已掌握 ' + (Math.round(pr.score * 10) / 10) + ' / ' + pr.total + '</span></div>' +
         '<p class="sec-sub">' + esc(d.core.intro || '') + '</p>';
-      body.innerHTML = head + (mode === 'points' ? pointsHTML(d) : bookHTML(d));
+      body.innerHTML = head + (mode === 'points' ? pointsHTML(d) : mode === 'book' ? bookHTML(d) : mapHTML(d));
       wirePoints();
+      if (mode === 'map') wireMap();
     }).catch(function (e) {
       body.innerHTML = '<div class="hubload">载入失败：' + esc(e.message) + '（请用本地服务器打开本站，例如 node tools/serve.cjs 8123）</div>';
     });
@@ -215,6 +218,50 @@
       }).join('');
       return '<article class="module"><h3><span>📘 ' + esc(bk.book) + '</span></h3>' + units + '</article>';
     }).join('');
+  }
+
+  function mapHTML() {
+    var M = window.SPRINT_MAP;
+    if (!M || !M.data) return '<div class="hubload">导图数据缺失。</div>';
+    var mk = MAPKEY[cur] || cur;
+    if (!M.data[mk]) return '<div class="hubload">该学科暂无导图。</div>';
+    var tips = M.tips || {};
+    function node(n, depth) {
+      var kids = n.children || [];
+      var tip = tips[n.name];
+      return '<li class="mn d' + depth + '">' +
+        '<span class="mn-t' + (kids.length ? ' has' : '') + '"' + (tip ? ' data-tip="' + esc(tip) + '"' : '') + '>' +
+        (kids.length ? '<i class="caret">▸</i>' : '<i class="leaf">•</i>') + esc(n.name) + (tip ? ' <em>💡</em>' : '') + '</span>' +
+        (kids.length ? '<ul class="mn-kids">' + kids.map(function (c) { return node(c, depth + 1); }).join('') + '</ul>' : '') + '</li>';
+    }
+    return '<div class="mapbox" id="hubMap"><ul class="mtree">' + node(M.data[mk], 0) + '</ul></div>' +
+      '<p class="sec-sub" style="margin-top:12px">点击带 ▸ 的节点展开子节点；带 💡 的节点点击可看备考提示。</p>';
+  }
+  function wireMap() {
+    var box = document.getElementById('hubMap');
+    if (!box) return;
+    box.querySelectorAll('.mn-t.has').forEach(function (t) {
+      t.addEventListener('click', function () {
+        var li = t.parentElement;
+        li.classList.toggle('open');
+        var c = t.querySelector('.caret');
+        if (c) c.textContent = li.classList.contains('open') ? '▾' : '▸';
+      });
+    });
+    box.querySelectorAll('.mn-t').forEach(function (t) {
+      t.addEventListener('click', function () {
+        var tip = t.dataset.tip;
+        if (!tip) return;
+        var old = box.querySelector('.maptip');
+        if (old) old.remove();
+        var dv = document.createElement('div');
+        dv.className = 'maptip';
+        dv.innerHTML = '<b>💡 ' + esc(t.textContent.replace(/[▸▾•💡\s]+/g, ' ').trim()) + '</b><p>' + esc(tip) + '</p>';
+        box.insertBefore(dv, box.firstChild);
+      });
+    });
+    var first = box.querySelector('.mn-t.has');
+    if (first) first.parentElement.classList.add('open');
   }
 
   function wirePoints() {
