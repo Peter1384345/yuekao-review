@@ -133,6 +133,8 @@
     });
     var aq = (window.ALL_QUIZ || {})[id];
     if (aq) aq.quiz.forEach(function (q) { out.push({ kind: 'single', q: q.q, options: q.options, a: q.answer, ex: q.explain, src: '本站自测' }); });
+    var sq = window.SUBJECT_QUIZ;
+    if (sq && sq.id === id) sq.quiz.forEach(function (q) { out.push({ kind: 'single', q: q.q, options: q.options, a: q.answer, ex: q.explain, src: '本站自测' }); });
     return out;
   }
   function trainerHTML(sc) {

@@ -16,7 +16,7 @@
   /* ---------- 画布光场粒子 ---------- */
   var canvas, ctx, W = 0, H = 0, dpr = 1, parts = [], raf = null, t0 = 0;
   function initCanvas() {
-    if (reduced) return;
+    if (reduced || window.innerWidth < 820) return;
     canvas = document.getElementById('fx');
     if (!canvas) {
       canvas = document.createElement('canvas');
@@ -27,7 +27,7 @@
     if (!ctx) { canvas.style.display = 'none'; return; }
     resize();
     window.addEventListener('resize', resize);
-    var n = Math.min(74, Math.max(34, Math.round(window.innerWidth / 24)));
+    var n = Math.min(44, Math.max(20, Math.round(window.innerWidth / 44)));
     parts = [];
     for (var i = 0; i < n; i++) {
       parts.push({
@@ -45,44 +45,55 @@
   }
   function resize() {
     if (!canvas) return;
-    dpr = Math.min(2, window.devicePixelRatio || 1);
+    dpr = Math.min(1.5, window.devicePixelRatio || 1);
     W = canvas.width = Math.floor(window.innerWidth * dpr);
     H = canvas.height = Math.floor(window.innerHeight * dpr);
     canvas.style.width = window.innerWidth + 'px';
     canvas.style.height = window.innerHeight + 'px';
   }
+  var lastDraw = 0, frameAcc = 0, frameCount = 0, degraded = false;
   function loop(now) {
+    if (degraded) return;
     raf = requestAnimationFrame(loop);
-    var t = (now - t0) / 1000;
+    if (now - lastDraw < 33) return;                 // 最高 30fps
+    var dt = now - lastDraw; lastDraw = now;
+    frameAcc += dt; frameCount++;
+    if (frameCount >= 45) {
+      if (frameAcc / frameCount > 90) {              // 整机帧率过低 → 自动关闭光场
+        degraded = true; canvas.style.display = 'none';
+        if (raf) cancelAnimationFrame(raf); raf = null; return;
+      }
+      frameAcc = 0; frameCount = 0;
+    }
     ctx.clearRect(0, 0, W, H);
     var dark = document.documentElement.getAttribute('data-theme') !== 'light';
-    for (var i = 0; i < parts.length; i++) {
-      var p = parts[i];
-      p.x += p.vx * dpr; p.y += p.vy * dpr;
-      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
-      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
-      var a = .22 + .22 * Math.sin(t * .8 + p.p);
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r * dpr, 0, 6.2832);
-      ctx.fillStyle = (i % 3 === 0 ? accent2 : accent);
-      ctx.globalAlpha = dark ? a : a * .55;
-      ctx.fill();
-    }
-    // 邻近连线
-    ctx.globalAlpha = dark ? .1 : .07;
+    ctx.globalAlpha = dark ? .3 : .16;
+    var link = 18000 * dpr * dpr;
+    // 连线：全部并成一条路径，一次描边
+    ctx.strokeStyle = accent;
     ctx.lineWidth = dpr * .6;
+    ctx.beginPath();
     for (var m = 0; m < parts.length; m++) {
+      var pm = parts[m];
       for (var k = m + 1; k < parts.length; k++) {
-        var dx = parts[m].x - parts[k].x, dy = parts[m].y - parts[k].y;
-        var d2 = dx * dx + dy * dy;
-        if (d2 < 20000 * dpr * dpr) {
-          ctx.strokeStyle = accent;
-          ctx.beginPath();
-          ctx.moveTo(parts[m].x, parts[m].y);
-          ctx.lineTo(parts[k].x, parts[k].y);
-          ctx.stroke();
-        }
+        var dx = pm.x - parts[k].x, dy = pm.y - parts[k].y;
+        if (dx * dx + dy * dy < link) { ctx.moveTo(pm.x, pm.y); ctx.lineTo(parts[k].x, parts[k].y); }
       }
+    }
+    ctx.stroke();
+    // 粒子：按颜色分两组批量填充
+    for (var g = 0; g < 2; g++) {
+      ctx.fillStyle = g ? accent2 : accent;
+      ctx.beginPath();
+      for (var i = g; i < parts.length; i += 2) {
+        var p = parts[i];
+        p.x += p.vx * dpr; p.y += p.vy * dpr;
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+        ctx.moveTo(p.x + p.r * dpr, p.y);
+        ctx.arc(p.x, p.y, p.r * dpr, 0, 6.2832);
+      }
+      ctx.fill();
     }
     ctx.globalAlpha = 1;
   }
@@ -147,11 +158,17 @@
     // 兜底：跳转滚动时被「跳过」的元素也要显示
     if (!initReveal.bound) {
       initReveal.bound = 1;
+      var sweepRaf = 0;
       var sweep = function () {
-        var vh = window.innerHeight;
-        $$('.reveal:not(.in)').forEach(function (n) {
-          var r = n.getBoundingClientRect();
-          if (r.top < vh * 0.96) n.classList.add('in');
+        if (sweepRaf) return;
+        sweepRaf = requestAnimationFrame(function () {
+          sweepRaf = 0;
+          var list = $$('.reveal:not(.in)');
+          if (!list.length) return;
+          var vh = window.innerHeight;
+          for (var i = 0; i < list.length; i++) {
+            if (list[i].getBoundingClientRect().top < vh * 0.96) list[i].classList.add('in');
+          }
         });
       };
       window.addEventListener('scroll', sweep, { passive: true });
@@ -183,17 +200,25 @@
 
   /* ---------- 卡片聚光 / 倾斜 ---------- */
   function initTilt() {
-    if (reduced) return;
-    $$('.kcard, .subcard, .dashcard, .ckcard, .module').forEach(function (c) {
-      if (c.dataset.tilt) return;
-      c.dataset.tilt = '1';
-      c.addEventListener('mousemove', function (e) {
-        var r = c.getBoundingClientRect();
-        var px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
-        c.style.setProperty('--mx', (px * 100) + '%');
-        c.style.setProperty('--my', (py * 100) + '%');
+    if (reduced || initTilt.bound) return;
+    initTilt.bound = 1;
+    var cur = null, raf = 0, mx = 0, my = 0;
+    document.addEventListener('mousemove', function (e) {
+      var el = e.target && e.target.closest ? e.target.closest('.kcard, .subcard, .dashcard, .ckcard, .module') : null;
+      if (el !== cur) {
+        if (cur) { cur.style.removeProperty('--mx'); cur.style.removeProperty('--my'); }
+        cur = el;
+      }
+      if (!cur || raf) return;
+      mx = e.clientX; my = e.clientY;
+      raf = requestAnimationFrame(function () {
+        raf = 0;
+        if (!cur) return;
+        var r = cur.getBoundingClientRect();
+        cur.style.setProperty('--mx', ((mx - r.left) / r.width * 100) + '%');
+        cur.style.setProperty('--my', ((my - r.top) / r.height * 100) + '%');
       });
-    });
+    }, { passive: true });
   }
 
   /* ---------- 涟漪 ---------- */
@@ -268,6 +293,30 @@
       initReveal();
       initCounters();
       initTilt();
+      // 低性能模式：手动保存过就听保存的，否则按设备能力自动判断
+      var stored = null;
+      try { stored = JSON.parse(localStorage.getItem('study.lite')); } catch (e) {}
+      var lowEnd = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
+      window.MOTION.setLite(stored === true || (stored === null && lowEnd));
+    },
+    setLite: function (v) {
+      v = !!v;
+      document.documentElement.classList.toggle('lite', v);
+      if (v) {
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
+        if (canvas) canvas.style.display = 'none';
+      } else if (canvas && !degraded) {
+        canvas.style.display = '';
+        lastDraw = 0; t0 = performance.now();
+        if (!raf) raf = requestAnimationFrame(loop);
+      }
+      var b = document.getElementById('perfBtn');
+      if (b) {
+        b.textContent = v ? '🌿' : '⚡';
+        b.title = v ? '当前：低性能模式（点击开启背景动效）' : '当前：动态模式（点击关闭背景动效省电）';
+      }
+      var tb = document.getElementById('perfTip');
+      if (tb) tb.remove();
     }
   };
 

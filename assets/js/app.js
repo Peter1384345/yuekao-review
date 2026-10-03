@@ -39,6 +39,7 @@
         '<a href="' + toolHref('hub') + '" class="' + (activeTool === 'hub' ? 'active' : '') + '">📚 知识库</a>' +
         '<a href="' + (inSub ? '../index.html#dash' : '#dash') + '" class="' + (activeTool === 'dash' ? 'active' : '') + '">🚀 驾驶舱</a>' +
       '</nav>' +
+      '<button class="iconbtn" id="perfBtn" title="低性能模式">⚡</button>' +
       '<button class="iconbtn" id="themeBtn" title="切换明暗主题">🌙</button>' +
       '</div></header>';
   }
@@ -107,7 +108,7 @@
           '<button class="master" data-mkey="' + k + '" title="标记已掌握">✓</button></article>';
       }).join('') + '</div>';
     }
-    return '<section class="block reveal" data-anim="blur" id="' + b.id + '">' +
+    return '<section class="block reveal" id="' + b.id + '">' +
       '<div class="sec-head"><span class="ic">' + esc(b.icon || '📌') + '</span><h2>' + esc(b.title) + '</h2></div>' +
       intro + body + '</section>';
   }
@@ -530,6 +531,20 @@
       const next = LS.get(THEME_KEY, 'dark') === 'dark' ? 'light' : 'dark';
       LS.set(THEME_KEY, next); paintTheme();
     });
+    const pb = $('#perfBtn');
+    if (pb) {
+      pb.addEventListener('click', () => {
+        const now = !document.documentElement.classList.contains('lite');
+        LS.set('study.lite', now);
+        if (window.MOTION) window.MOTION.setLite(now);
+        const tip = document.createElement('div');
+        tip.id = 'perfTip';
+        tip.textContent = now ? '已切换为低性能模式：关闭粒子光场与背景动画' : '已开启动态模式：恢复粒子光场与背景动画';
+        tip.style.cssText = 'position:fixed;left:50%;bottom:34px;transform:translateX(-50%);padding:10px 20px;border-radius:12px;background:var(--panel);border:1px solid var(--line);color:var(--ink);font-size:13.5px;z-index:300';
+        document.body.appendChild(tip);
+        setTimeout(() => tip.remove(), 2200);
+      });
+    }
     const tt = $('#toTop');
     if (tt) {
       tt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
@@ -565,7 +580,9 @@
     if (window.SUBJECT_DATA) renderSubject();
     else if (window.SUBJECT_INDEX) renderHome();
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initThemeAndRender);
-  else initThemeAndRender();
+  // 注意：脚本带 defer 时执行阶段 readyState 已是 'interactive'，
+  // 必须等 DOMContentLoaded，否则后面的 kb.js / dashboard.js 还没执行。
+  if (document.readyState === 'complete') initThemeAndRender();
+  else document.addEventListener('DOMContentLoaded', initThemeAndRender, { once: true });
   window.STUDY = { confetti, flash, renderSubject, renderHome, topbar, afterRender, esc, LS, stars, toolHref, subHref };
 })();

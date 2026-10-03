@@ -6,20 +6,20 @@
 
 :root{
   --bg:#05070f; --ink:#eaf0ff; --dim:#93a1c2; --dim2:#6b7899;
-  --panel:rgba(18,24,44,.62); --panel2:rgba(28,37,66,.5); --solid:#101830;
+  --panel:rgba(18,24,44,.80); --panel2:rgba(28,37,66,.68); --solid:#101830;
   --line:rgba(255,255,255,.10); --line2:rgba(255,255,255,.055);
   --accent:#5b8cff; --accent2:#25d8ee; --accent3:#a855f7;
   --ok:#34d399; --warn:#fbbf24; --bad:#fb7185;
   --r:20px; --r-s:13px;
   --shadow:0 30px 70px -30px rgba(0,0,0,.95);
-  --glass:blur(18px) saturate(170%);
+  --glass:none; /* 性能：毛玻璃只保留在顶栏；其余用半透明底色 */
   --spring:cubic-bezier(.22,1,.36,1);
   --ease:cubic-bezier(.4,0,.2,1);
   --t-f:.28s; --t-m:.5s; --t-s:.8s;
 }
 :root[data-theme="light"]{
   --bg:#eef1fa; --ink:#111a30; --dim:#586283; --dim2:#8792ad;
-  --panel:rgba(255,255,255,.72); --panel2:rgba(255,255,255,.55); --solid:#ffffff;
+  --panel:rgba(255,255,255,.90); --panel2:rgba(255,255,255,.76); --solid:#ffffff;
   --line:rgba(18,30,66,.11); --line2:rgba(18,30,66,.06);
   --shadow:0 26px 60px -32px rgba(30,50,110,.5);
 }
@@ -32,13 +32,13 @@ body{
 }
 
 /* ---------- 流动光场背景 ---------- */
-.aurora{position:fixed;inset:-25% -15%;z-index:-3;pointer-events:none;overflow:hidden;filter:blur(70px)}
-.aurora span{position:absolute;border-radius:50%;opacity:.55;mix-blend-mode:screen;will-change:transform}
+.aurora{position:fixed;inset:-25% -15%;z-index:-3;pointer-events:none;overflow:hidden;filter:blur(46px)}
+.aurora span{position:absolute;border-radius:50%;opacity:.5;will-change:transform;transform:translateZ(0)}
 .aurora span:nth-child(1){width:44vw;height:44vw;left:-6%;top:-10%;background:radial-gradient(circle at 30% 30%,var(--accent),transparent 68%);animation:blobA 26s var(--ease) infinite}
 .aurora span:nth-child(2){width:38vw;height:38vw;right:-8%;top:16%;background:radial-gradient(circle at 60% 40%,var(--accent2),transparent 68%);animation:blobB 32s var(--ease) infinite}
 .aurora span:nth-child(3){width:34vw;height:34vw;left:24%;bottom:-14%;background:radial-gradient(circle at 50% 50%,var(--accent3),transparent 68%);animation:blobC 38s var(--ease) infinite}
 .aurora span:nth-child(4){width:26vw;height:26vw;left:44%;top:34%;background:radial-gradient(circle at 50% 50%,#34d399,transparent 70%);opacity:.32;animation:blobB 44s var(--ease) infinite reverse}
-:root[data-theme="light"] .aurora span{opacity:.34;mix-blend-mode:multiply;filter:blur(80px)}
+:root[data-theme="light"] .aurora span{opacity:.3}
 @keyframes blobA{0%,100%{transform:translate3d(0,0,0) scale(1)}33%{transform:translate3d(10%,12%,0) scale(1.18)}66%{transform:translate3d(-8%,6%,0) scale(.9)}}
 @keyframes blobB{0%,100%{transform:translate3d(0,0,0) scale(1)}40%{transform:translate3d(-12%,10%,0) scale(1.22)}70%{transform:translate3d(6%,-10%,0) scale(.88)}}
 @keyframes blobC{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(14%,-12%,0) scale(1.15)}}
@@ -47,9 +47,7 @@ body{
 .grid-bg{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.55;
   background-image:linear-gradient(var(--line2) 1px,transparent 1px),linear-gradient(90deg,var(--line2) 1px,transparent 1px);
   background-size:58px 58px;
-  mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 10%,transparent 76%);
-  animation:gridDrift 40s linear infinite}
-@keyframes gridDrift{to{background-position:58px 58px,58px 58px}}
+  mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 10%,transparent 76%)}
 #fx{position:fixed;inset:0;z-index:-1;pointer-events:none}
 
 /* 顶部滚动进度 */
@@ -58,12 +56,16 @@ body{
   transform:scaleX(0);transform-origin:0 50%;box-shadow:0 0 18px var(--accent)}
 
 .wrap{max-width:1200px;margin:0 auto;padding:0 22px;position:relative}
+/* 首屏加载骨架：脚本就绪前的即时反馈 */
+.boot{min-height:100vh;display:flex;align-items:center;justify-content:center;gap:12px;color:var(--dim);font-size:14.5px}
+.boot-dot{width:12px;height:12px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:0 0 18px var(--accent);animation:pulse 1.6s var(--ease) infinite}
 a{color:inherit;text-decoration:none}
 img{max-width:100%}
 
 /* ---------- 顶部导航 ---------- */
-.topbar{position:sticky;top:0;z-index:120;backdrop-filter:var(--glass);-webkit-backdrop-filter:var(--glass);
-  background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 88%,transparent),color-mix(in srgb,var(--bg) 55%,transparent));
+.topbar{position:sticky;top:0;z-index:120;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 95%,transparent),color-mix(in srgb,var(--bg) 80%,transparent));
   border-bottom:1px solid var(--line)}
 .topbar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
   background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent);opacity:.75;
@@ -90,7 +92,7 @@ img{max-width:100%}
 .reveal[data-anim="left"]{transform:translateX(-34px)}
 .reveal[data-anim="right"]{transform:translateX(34px)}
 .reveal[data-anim="scale"]{transform:scale(.92)}
-.reveal[data-anim="blur"]{filter:blur(12px);transform:translateY(20px)}
+.reveal[data-anim="blur"]{transform:translateY(20px) scale(.985)}
 .reveal.in{opacity:1;transform:none;filter:none}
 
 /* ---------- Hero ---------- */
@@ -121,11 +123,10 @@ img{max-width:100%}
 .subcard::before{content:"";position:absolute;inset:0;background:radial-gradient(520px 240px at var(--mx,100%) var(--my,0%),var(--c,#5b8cff),transparent 68%);opacity:.3;transition:opacity var(--t-m)}
 .subcard::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;opacity:0;transition:opacity var(--t-m);
   background:conic-gradient(from var(--ang,0deg),var(--c,#5b8cff),transparent 30%,var(--c,#5b8cff) 60%,transparent);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
-  animation:spin 4s linear infinite}
-.subcard:hover{transform:translateY(-10px) scale(1.015);box-shadow:var(--shadow);border-color:transparent}
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.subcard:hover{transform:translateY(-6px);box-shadow:var(--shadow);border-color:transparent}
 .subcard:hover::before{opacity:.62}
-.subcard:hover::after{opacity:1}
+.subcard:hover::after{opacity:1;animation:spin 5s linear infinite}
 @keyframes spin{to{--ang:360deg}}
 @property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
 .subcard .emoji{font-size:36px;margin-bottom:10px;display:block;position:relative;transition:transform var(--t-m) var(--spring)}
@@ -157,6 +158,12 @@ section.block:hover .sec-head .ic{transform:translateY(-4px) rotate(-10deg) scal
 @keyframes shimmer{to{transform:translateX(200%)}}
 .proglabel{font-size:13px;color:var(--dim);white-space:nowrap;font-variant-numeric:tabular-nums}
 
+/* ---------- 渲染性能：屏幕外内容跳过布局与绘制 ---------- */
+.kcard{content-visibility:auto;contain-intrinsic-size:auto 210px}
+.pt{content-visibility:auto;contain-intrinsic-size:auto 46px}
+.li{content-visibility:auto;contain-intrinsic-size:auto 84px}
+.deckitem{content-visibility:auto;contain-intrinsic-size:auto 64px}
+
 /* ---------- 考点卡片 ---------- */
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
 .kcard{position:relative;padding:20px 20px 18px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);
@@ -166,7 +173,7 @@ section.block:hover .sec-head .ic{transform:translateY(-4px) rotate(-10deg) scal
   background:radial-gradient(380px 200px at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--accent) 30%,transparent),transparent 70%)}
 .kcard::after{content:"";position:absolute;left:0;top:0;height:100%;width:3px;
   background:linear-gradient(180deg,var(--accent),var(--accent2));transform:scaleY(0);transform-origin:top;transition:transform var(--t-m) var(--spring)}
-.kcard:hover{transform:translateY(-6px);border-color:var(--accent);box-shadow:var(--shadow)}
+.kcard:hover{transform:translateY(-4px);border-color:var(--accent)}
 .kcard:hover::before{opacity:1}
 .kcard:hover::after{transform:scaleY(1)}
 .kcard h4{margin:0 0 8px;font-size:16.5px;font-weight:800;padding-right:46px;line-height:1.5}
@@ -462,6 +469,21 @@ footer{padding:46px 0 38px;border-top:1px solid var(--line);color:var(--dim2);fo
   transform:translate(-50%,-50%);transition:opacity var(--t-m);filter:blur(14px)}
 .cursor-glow.on{opacity:1}
 
+/* 低性能模式：一键关闭全部背景动效 */
+:root.lite .aurora{display:none}
+:root.lite .grid-bg{opacity:.35}
+:root.lite #fx{display:none}
+:root.lite .cursor-glow{display:none}
+:root.lite .reveal{opacity:1!important;transform:none!important;filter:none!important;transition:none!important}
+:root.lite .subcard::after{animation:none!important}
+:root.lite *{animation-duration:.001ms!important;animation-iteration-count:1!important}
+
+/* 低性能 / 小屏：关掉最重的特效 */
+@media(max-width:820px){
+  .aurora{filter:blur(38px)}
+  .cursor-glow{display:none}
+  #fx{display:none}
+}
 @media(prefers-reduced-motion:reduce){
   *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
   .reveal{opacity:1!important;transform:none!important;filter:none!important}
